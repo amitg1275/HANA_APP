@@ -1,0 +1,27 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv='Content-Type' content='text/html;charset=UTF-8' />
+<title>web</title>
+<!-- 1.) Load SAPUI5 (from a remote server), select theme and control library -->
+<script src="{{{sapui5_sb.url}}}/resources/sap-ui-core.js"
+	id="sap-ui-bootstrap" data-sap-ui-libs="sap.m,sap.ui.table"
+	data-sap-ui-theme="sap_bluecrystal">
+		</script>
+<script>
+
+	var oModel = new sap.ui.model.odata.v2.ODataModel("/xsodata/purchaseOrder.xsodata", true);
+	var oTable = new sap.ui.table.Table({ title: "My first table" });
+	oTable.addColumn(new sap.ui.table.Column({ label: "PO ID", template: "PURCHASEORDERID" }));
+	oTable.setModel(oModel);
+	oTable.bindRows("/POHeader");
+	oTable.placeAt("uiArea");
+
+	</script>		
+</head>
+<body class="sapUiBody">
+	<!-- This is where you place the UI5 button -->
+	<div id="uiArea"></div>
+</body>
+</html>
