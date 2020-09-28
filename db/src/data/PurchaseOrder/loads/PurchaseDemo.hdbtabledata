@@ -1,7 +1,7 @@
 {
 	"format_version": 1,
 	"imports": [{
-		"target_table": "PurchaseOrder.Header1",
+		"target_table": "PurchaseOrder.Header",
 		"source_data": {
 			"data_type": "CSV",
 			"file_name": "header.csv",
@@ -42,7 +42,7 @@
 		}
 	},
 	{
-		"target_table": "PurchaseOrder.Item1",
+		"target_table": "PurchaseOrder.Item",
 		"source_data": {
 			"data_type": "CSV",
 			"file_name": "item.csv",
