@@ -14,6 +14,12 @@ modules:
           url: '~{url}'
           forwardAuthToken: true
       - name: UAA-service
+      - name: core_node_api
+        group: destinations
+        properties:
+          name: core-backend
+          url: '~{url}'
+          forwardAuthToken: true
   - name: db
     type: hdb
     path: db
@@ -24,6 +30,17 @@ modules:
     path: core_xsjs
     provides:
       - name: core_xsjs_api
+        properties:
+          url: '${default-url}'
+    requires:
+      - name: UAA-service
+      - name: hdi_db
+      - name: db
+  - name: core_node
+    type: nodejs
+    path: core_node
+    provides:
+      - name: core_node_api
         properties:
           url: '${default-url}'
     requires:
