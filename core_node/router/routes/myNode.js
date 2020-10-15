@@ -15,8 +15,8 @@ module.exports = function() {
 app.get("/example1", (req, res) => {
 	let client = req.db;
 	client.prepare(
-		`SELECT PURCHASEORDERID 
-		                   FROM "PO.Header"`,
+		`SELECT "PurchaseOrderId" 
+		                   FROM "PO.HeaderView"`,
 		(err, statement) => {
 			if (err) {
 				return res.type("text/plain").status(500).send(`ERROR: ${err.toString()}`);
@@ -36,6 +36,40 @@ app.get("/example1", (req, res) => {
 		});
 	return null;
 });	
+
+//Simple Database Update - In-line Callbacks
+//Example1 handler
+app.get("/example3", (req, res) => {
+//var body = $.request.body.asString();
+//var oData = JSON.parse(body)
+  var oData = {
+    "currency": "EUR",
+    "po": "300000000"
+  };
+	let client = req.db;
+	client.prepare(
+          'UPDATE "PO.Header" SET CURRENCY = ? WHERE PURCHASEORDERID = ?',
+		(err, statement) => {
+			if (err) {
+				return res.type("text/plain").status(500).send(`ERROR: ${err.toString()}`);
+			}
+			statement.exec([oData.currency,oData.po],
+				(err, results) => {
+					if (err) {
+						return res.type("text/plain").status(500).send(`ERROR: ${err.toString()}`);
+					} else {
+//						client.commit(),
+						var result = JSON.stringify({
+							Objects: results
+						});
+						return res.type("application/json").status(200).send(result);
+					}
+				});
+			return null;
+		});
+	return null;
+});	
+
 var async = require("async");
 //Simple Database Select Via Client Wrapper/Middelware - Async Waterfall
 app.get("/example2", (req, res) => {
