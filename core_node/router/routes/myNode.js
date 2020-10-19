@@ -1,5 +1,5 @@
 /*eslint no-console: 0, no-unused-vars: 0, no-shadow: 0, new-cap: 0*/
-/*eslint-env node, es6 */
+/*eslint-env node, es8 */
 "use strict";
 var express = require("express");
 
@@ -101,5 +101,55 @@ app.get("/example2", (req, res) => {
 		}
 	]);
 });	
+
+	//Simple Database Select Via Client Wrapper/Middelware - Promises
+	app.get("/promises", (req, res) => {
+		const dbClass = require(global.__base + "utils/dbPromises");
+		let db = new dbClass(req.db);
+		db.preparePromisified(`SELECT SESSION_USER, CURRENT_SCHEMA 
+				            	 FROM "DUMMY"`)
+			.then(statement => {
+				db.statementExecPromisified(statement, [])
+					.then(results => {
+						let result = JSON.stringify({
+							Objects: results
+						});
+						return res.type("application/json").status(200).send(result);
+					})
+					.catch(err => {
+						return res.type("text/plain").status(500).send(`ERROR: ${err.toString()}`);
+					});
+			})
+			.catch(err => {
+				return res.type("text/plain").status(500).send(`ERROR: ${err.toString()}`);
+			});
+	});
+	
+//	Simple Database Select Via Client Wrapper/Middelware - Await
+	app.get("/await", async(req, res) => {
+  var oData = {
+    "currency": "LJP",
+    "po": "300000000"
+  };		
+			const dbClass = require(global.__base + "utils/dbPromises");
+			let db = new dbClass(req.db);  
+		try {
+			const statement = await db.preparePromisified('UPDATE "PO.Header" SET CURRENCY = ? WHERE PURCHASEORDERID = ?');
+			const results = await db.statementExecPromisified(statement, ["AAA",oData.po]);
+			
+			const statement1 = await db.preparePromisified('UPDATE "PO.Header123" SET CURRENCY = ? WHERE PURCHASEORDERID = ?');
+			const results1 = await db.statementExecPromisified(statement1, [oData.currency,oData.po]);			
+			db.client.setAutoCommit(true);	
+			let result = JSON.stringify({
+				Objects: results
+			});
+			return res.type("application/json").status(200).send(result);
+		} catch (e) {
+			db.client.rollback();
+			db.client.setAutoCommit(true);
+			return res.type("text/plain").status(500).send(`ERROR: ${e.toString()}`);
+		}
+	});
+	
 	return app;
 };

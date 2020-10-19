@@ -470,5 +470,8 @@
 		"amd": true,
 		"mocha": true,
 		"jquery": true
-	}
+	},
+  "parserOptions": {
+    "ecmaVersion": 8
+  }	
 }
