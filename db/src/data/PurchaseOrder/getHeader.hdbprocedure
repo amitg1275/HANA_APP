@@ -1,0 +1,15 @@
+PROCEDURE "getHeader" ( IN IN_ID Integer,
+	                    OUT ex_header "PurchaseOrder.Header" )
+   LANGUAGE SQLSCRIPT
+   SQL SECURITY INVOKER
+   --DEFAULT SCHEMA <default_schema_name>
+   READS SQL DATA AS
+BEGIN
+   /*************************************
+       Write your procedure logic 
+   *************************************/
+   ex_header = select *
+              from "PurchaseOrder.Header"
+              where "PURCHASEORDERID" =:IN_ID;
+
+END

@@ -150,7 +150,7 @@ module.exports = function () {
 			return res.type("text/plain").status(500).send(`ERROR: ${e.toString()}`);
 		}
 	});
-	
+
 	//Simple Database Call Stored Procedure
 	app.get("/procedures", (req, res) => {
 		var client = req.db;
@@ -171,6 +171,131 @@ module.exports = function () {
 				});
 				res.type("application/json").status(200).send(result);
 			});
+		});
+	});
+
+	//Database Call Stored Procedure With Inputs
+	app.get("/procedures2/:in_id?", (req, res) => {
+		var client = req.db;
+		var hdbext = require("@sap/hdbext");
+		var in_id = req.params.in_id;
+		var inputParams = "";
+		if (typeof in_id === "undefined" || in_id === null) {
+			inputParams = {};
+		} else {
+			inputParams = {
+				IN_ID: in_id
+			};
+		}
+		//(cleint, Schema, Procedure, callback)
+		hdbext.loadProcedure(client, null, "getHeader", (err, sp) => {
+			if (err) {
+				res.type("text/plain").status(500).send(`ERROR: ${err.toString()}`);
+				return;
+			}
+			//(Input Parameters, callback(errors, Output Scalar Parameters, [Output Table Parameters])
+			sp(inputParams, (err, parameters, results) => {
+				if (err) {
+					res.type("text/plain").status(500).send(`ERROR: ${err.toString()}`);
+				}
+				var result = JSON.stringify({
+					EX_BP_ADDRESSES: results
+				});
+				res.type("application/json").status(200).send(result);
+			});
+		});
+	});
+
+	//Call 2 Database Stored Procedures in Parallel
+	app.get("/proceduresParallel/", (req, res) => {
+		var client = req.db;
+		var hdbext = require("@sap/hdbext");
+		var inputParams = {
+			IN_ID: "500000000"
+		};
+		var result = {};
+		async.parallel([
+
+			function (cb) {
+				hdbext.loadProcedure(client, null, "getHeader", (err, sp) => {
+					if (err) {
+						cb(err);
+						return;
+					}
+					//(Input Parameters, callback(errors, Output Scalar Parameters, [Output Table Parameters])
+					sp(inputParams, (err, parameters, results) => {
+						result.EX_TOP_3_EMP_PO_COMBINED_CNT = results;
+						cb();
+					});
+				});
+
+			},
+			function (cb) {
+				//(client, Schema, Procedure, callback)            		
+				hdbext.loadProcedure(client, null, "getPOItemsSQL", (err, sp) => {
+					if (err) {
+						cb(err);
+						return;
+					}
+					//(Input Parameters, callback(errors, Output Scalar Parameters, [Output Table Parameters])
+					sp(inputParams, (err, parameters, results) => {
+						result.EX_BP_ADDRESSES = results;
+						cb();
+					});
+				});
+			}
+		], (err) => {
+			if (err) {
+				res.type("text/plain").status(500).send(`ERROR: ${err.toString()}`);
+			} else {
+				res.type("application/json").status(200).send(JSON.stringify(result));
+			}
+		});
+	});
+
+	//Call 2 Db calls in Parallel: Committ work in single statement at time
+	app.get("/dbParallel/", (req, res) => {
+		var client = req.db;
+		var hdbext = require("@sap/hdbext");
+		// var inputParams = {
+		// 	IN_ID: "500000000"
+		// };
+		var result = {};
+		async.parallel([
+
+			function (cb) {
+				client.prepare('UPDATE "PO.Header" SET CURRENCY = ? WHERE PURCHASEORDERID = ?',
+					(err, statement) => {
+						if (err) {
+							cb(err);
+							return;
+						}
+						statement.exec(["LDF", "300000000"], (execErr, results) => {
+							result.EX_BP_ADDRESSES = results;
+							cb();
+						});
+					});
+			},
+			function (cb) {
+				client.prepare('UPDATE "PO.Header123" SET CURRENCY = ? WHERE PURCHASEORDERID = ?',
+					(err, statement) => {
+						if (err) {
+							cb(err);
+							return;
+						}
+						statement.exec(["ABC", "300000000"], (execErr, results) => {
+							result.EX_BP_INFO1 = results;
+							cb();
+						});
+					});
+			}
+		], (err) => {
+			if (err) {
+				client.rollback();
+				res.type("text/plain").status(500).send(`ERROR: ${err.toString()}`);
+			} else {
+				res.type("application/json").status(200).send(JSON.stringify(result));
+			}
 		});
 	});
 	return app;
