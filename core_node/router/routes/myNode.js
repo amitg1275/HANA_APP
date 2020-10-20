@@ -6,9 +6,31 @@ var express = require("express");
 module.exports = function () {
 	var app = express.Router();
 
+	// Begin Translation code 	
+	let TextBundle = require("@sap/textbundle").TextBundle;
+
+	function getLocale(req) {
+		let langparser = require("accept-language-parser");
+		let lang = req.headers["accept-language"];
+		if (!lang) {
+			return null;
+		}
+		let arr = langparser.parse(lang);
+		if (!arr || arr.length < 1) {
+			return null;
+		}
+		let locale = arr[0].code;
+		if (arr[0].region) {
+			locale += "_" + arr[0].region;
+		}
+		return locale;
+	}
+	// End translation code
 	//Hello Router
 	app.get("/", (req, res) => {
-		return res.type("text/plain").status(200).send("Hello World Node.js");
+		let bundle = new TextBundle(global.__base + "i18n/messages", getLocale(req)); // Translation
+		let hello = bundle.getText("hello"); // Translation
+		return res.type("text/plain").status(200).send(hello);
 	});
 	//Simple Database Select - In-line Callbacks
 	//Example1 handler

@@ -4,10 +4,11 @@
 
 module.exports = (app, server) => {
 	app.use("/node", require("./routes/myNode")());
+	app.use("/node/excAsync", require("./routes/exerciseAsync")(server));
+	app.use("/node/textBundle", require("./routes/textBundle")());
 
-	app.use( (err, req, res, next) => {
+	app.use((err, req, res, next) => {
 		console.error(JSON.stringify(err));
 		res.status(500).send(`System Error ${JSON.stringify(err)}`);
 	});
-
 };
